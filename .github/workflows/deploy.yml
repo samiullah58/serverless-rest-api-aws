@@ -3,7 +3,7 @@ name: Deploy Serverless App to AWS
 on:
   push:
     branches:
-      - master   # 🚀 Trigger when pushing to master branch
+      - master
 
 jobs:
   deploy:
@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        stage: [dev, prod]   # 🟢 Deploy to both environments automatically
+        stage: [dev, prod]
 
     steps:
       - name: Checkout code
@@ -22,8 +22,8 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Serverless Framework
-        run: npm install -g serverless
+      - name: Install Serverless Framework v3
+        run: npm install -g serverless@3
 
       - name: Install dependencies
         run: npm ci
@@ -32,7 +32,5 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          SLS_DETECT_CI: true
-          SLS_IGNORE_WARNING: true
         run: |
-         npx serverless deploy --stage ${{ matrix.stage }} --region us-east-1 --verbose --console
+          npx serverless deploy --stage ${{ matrix.stage }} --region us-east-1 --verbose
