@@ -1,5 +1,5 @@
 service: items-rest-api
-frameworkVersion: '4'
+frameworkVersion: '*'
 
 provider:
   name: aws
