@@ -29,7 +29,10 @@ exports.main = async (event) => {
       ReturnValues: "ALL_NEW"
     };
 
+    console.log("params", params);
+
     const result = await ddb.send(new UpdateCommand(params));
+    console.log("result", result);
     return success(200, result.Attributes);
   } catch (err) {
     console.error("Error updating item:", err);
