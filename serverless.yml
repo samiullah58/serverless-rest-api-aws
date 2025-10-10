@@ -5,7 +5,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
-  profile: free-tier
+  # profile: free-tier
   stage: ${opt:stage, 'dev'}
   environment:
     TABLE_NAME: ${self:service}-${sls:stage}-table
