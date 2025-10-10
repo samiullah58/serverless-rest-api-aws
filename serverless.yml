@@ -1,0 +1,91 @@
+service: items-rest-api
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  profile: free-tier
+  stage: ${opt:stage, 'dev'}
+  environment:
+    TABLE_NAME: ${self:service}-${sls:stage}-table
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Scan
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.TABLE_NAME}
+  logs:
+    restApi: true
+
+functions:
+  create:
+    handler: src/handlers/create.main
+    events:
+      - http:
+          path: items
+          method: post
+          cors: true
+
+  get:
+    handler: src/handlers/get.main
+    events:
+      - http:
+          path: items/{id}
+          method: get
+          cors: true
+
+  list:
+    handler: src/handlers/list.main
+    events:
+      - http:
+          path: items
+          method: get
+          cors: true
+
+  update:
+    handler: src/handlers/update.main
+    events:
+      - http:
+          path: items/{id}
+          method: put
+          cors: true
+
+  remove:
+    handler: src/handlers/remove.main
+    events:
+      - http:
+          path: items/{id}
+          method: delete
+          cors: true
+
+resources:
+  Resources:
+    ItemsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST  # Free-tier friendly
+
+outputs:
+  ApiBaseUrl:
+    Value:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Ref: ApiGatewayRestApi
+          - ".execute-api.${self:provider.region}.amazonaws.com/${sls:stage}"
+    Export:
+      Name: ${self:service}-${sls:stage}-url
