@@ -3,16 +3,19 @@ name: Deploy Serverless App to AWS
 on:
   push:
     branches:
+      - dev
       - master
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
 
 jobs:
-  deploy:
+  deploy-dev:
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        stage: [dev, prod]
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,9 +31,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Deploy to AWS (${{ matrix.stage }})
+      - name: Deploy to AWS (dev)
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          npx serverless@3 deploy --stage ${{ matrix.stage }} --region us-east-1 --verbose
+          npx serverless@3 deploy --stage dev --region us-east-1 --verbose
+
+  deploy-prod:
+    if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'master')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Serverless Framework v3
+        run: npm install -g serverless@3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to AWS (prod)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          npx serverless@3 deploy --stage prod --region us-east-1 --verbose
